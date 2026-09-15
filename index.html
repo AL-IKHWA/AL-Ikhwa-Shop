@@ -513,13 +513,15 @@ function renderProducts(products){
     const mainImg = p.image || (p.images && p.images[0]) || '';
     return `
     <div class="product-card">
-      <div class="product-img">
+      <a href="product.html?id=${p.id}" class="product-img">
         ${outOfStock ? '<span class="stock-flag out">نفدت الكمية</span>' : (p.stock <= 2 ? `<span class="stock-flag">آخر ${p.stock} قطع</span>` : '')}
         ${mainImg ? `<img src="${mainImg}" alt="${escapeHtml(p.name)}">` : `<span class="ph">لا توجد صورة</span>`}
-      </div>
+      </a>
       <div class="product-body">
         ${p.category ? `<span class="cat">${escapeHtml(p.category)}</span>` : ''}
-        <h3>${escapeHtml(p.name)}</h3>
+        <a href="product.html?id=${p.id}">
+          <h3>${escapeHtml(p.name)}</h3>
+        </a>
         ${p.description ? `<p class="desc">${escapeHtml(p.description)}</p>` : ''}
         <div class="product-foot">
           <div class="price">${p.price} <small>د.ج</small></div>
