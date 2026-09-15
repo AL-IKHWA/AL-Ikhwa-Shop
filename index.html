@@ -87,7 +87,7 @@
   }
   .overlay.open{opacity:1;pointer-events:auto;}
   .cart-drawer{
-    position:fixed;top:0;bottom:0;left:0;width:min(420px,95vw);
+    position:fixed;top:0;bottom:0;left:0;width:min(380px,90vw);
     background:var(--linen);z-index:95;
     transform:translateX(-100%);transition:transform .3s ease;
     display:flex;flex-direction:column;
@@ -124,8 +124,8 @@
     padding:.6rem;font-weight:700;font-size:.85rem;cursor:pointer;transition:background .2s ease;
   }
   .add-cart-btn:hover{background:var(--brass);}
-  .checkout-fields input, .checkout-fields select {
-    width:100%; padding:.6rem; margin-bottom:.5rem; border:1px solid var(--line); background:#fff; font-family:'Cairo',sans-serif; border-radius:4px;
+  .checkout-fields input {
+    width:100%; padding:.4rem; margin-bottom:.5rem; border:1px solid var(--line); background:#fff; font-family:'Cairo',sans-serif;
   }
 
   /* ---------- Hero ---------- */
@@ -278,11 +278,6 @@
     max-width:1000px;margin:1.6rem auto 0;
     text-align:center;font-size:.8rem;color:#a89a86;
   }
-
-  /* Success Modal */
-  .success-modal{position:fixed;inset:0;background:#fff;z-index:100;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem;}
-  .success-modal.active{display:flex;}
-  .green-circle{width:90px;height:90px;background:#2e7d32;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:3rem;margin-bottom:1.5rem;}
 </style>
 
 <!-- Firebase SDKs -->
@@ -375,28 +370,16 @@
     </button>
   </div>
   <div class="cart-items" id="cartItems"></div>
-  <div class="cart-foot" id="cartFoot">
+  <div class="cart-foot">
     <div class="checkout-fields">
       <input type="text" id="custName" placeholder="الاسم الكامل" required>
       <input type="tel" id="custPhone" placeholder="رقم الهاتف" required>
-      <select id="custWilaya" onchange="updateCommunes()"><option value="">اختر الولاية</option></select>
-      <select id="custCommune"><option value="">اختر البلدية</option></select>
-      <select id="paymentMethod">
-        <option value="الدفع عند الاستلام (كاش)">الدفع عند الاستلام (كاش)</option>
-        <option value="بريدي موب (BaridiMob)">بريدي موب (BaridiMob)</option>
-      </select>
+      <input type="text" id="custAddress" placeholder="العنوان والولاية" required>
     </div>
     <div class="cart-total"><span>الإجمالي</span><span id="cartTotal">0 د.ج</span></div>
     <button class="add-cart-btn" id="checkoutBtn">إتمام الطلب</button>
   </div>
 </aside>
-
-<div class="success-modal" id="successModal">
-  <div class="green-circle">✓</div>
-  <h2 style="font-family:'Tajawal',sans-serif;margin-bottom:1rem;color:var(--espresso);">سوف تستلم الإدارة المتخصصة الطلب</h2>
-  <p style="color:#555;font-size:1.1rem;margin-bottom:2rem;">سوف نتصل بك قريباً، شكراً لك!</p>
-  <button class="add-cart-btn" style="max-width:200px;" onclick="closeSuccess()">العودة للمتجر</button>
-</div>
 
 <script>
 // إعدادات Firebase
@@ -412,84 +395,6 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-
-const dzData = {
-  "01 - أدرار": ["أدرار", "تامست", "شروين"],
-  "02 - الشلف": ["الشلف", "تنس", "أولاد فارس"],
-  "03 - الأغواط": ["الأغواط", "أفلو", "حاسي الرمل"],
-  "04 - أم البواقي": ["أم البواقي", "عين بيضاء", "عين مليلة"],
-  "05 - باتنة": ["باتنة", "أريس", "بريكة"],
-  "06 - بجاية": ["بجاية", "أميزور", "أقبو"],
-  "07 - بسكرة": ["بسكرة", "طولقة", "سيدي عقبة"],
-  "08 - بشار": ["بشار", "القنادسة", "تاغيت"],
-  "09 - البليدة": ["البليدة", "بوفاريك", "العفرون", "اولاد يعيش"],
-  "10 - البويرة": ["البويرة", "الأخضرية", "سور الغزلان"],
-  "11 - تمنراست": ["تمنراست", "عين أمقل"],
-  "12 - تبسة": ["تبسة", "الونزة", "العوينات"],
-  "13 - تلمسان": ["تلمسان", "مغنية", "منصورة"],
-  "14 - تيارت": ["تيارت", "سوق الأحد", "فرندة"],
-  "15 - تيزي وزو": ["تيزي وزو", "أزازقة", "ذراع بن خدة"],
-  "16 - الجزائر": ["الجزائر الوسطى", "سيدي امحمد", "باب الوادي", "الشراقة", "الدرارية", "الرويبة", "بئر خادم"],
-  "17 - الجلفة": ["الجلفة", "حاسي بحبح", "مسعد"],
-  "18 - جيجل": ["جيجل", "جيملة", "طاهير"],
-  "19 - سطيف": ["سطيف", "العلمة", "عين أرنات"],
-  "20 - سعيدة": ["سعيدة", "عين الحجر"],
-  "21 - سكيكدة": ["سكيكدة", "الحروش", "عزابة"],
-  "22 - سيدي بلعباس": ["سيدي بلعباس", "سفيزف", "ابن باديس"],
-  "23 - عنابة": ["عنابة", "البوني", "الحجار"],
-  "24 - قالمة": ["قالمة", "وادي الزناتي"],
-  "25 - قسنطينة": ["قسنطينة", "الخروب", "حامة بوزيان"],
-  "26 - المدية": ["المدية", "البرواقية", "قصار البخاري"],
-  "27 - مستغانم": ["مستغانم", "عين تادلس"],
-  "28 - المسيلة": ["المسيلة", "بوسعادة"],
-  "29 - معسكر": ["معسكر", "سيق", "غريس"],
-  "30 - ورقلة": ["ورقلة", "تقرت", "حاسي مسعود"],
-  "31 - وهران": ["وهران", "إيسني", "بئر الجير", "السانية"],
-  "32 - البيض": ["البيض", "بوقطب"],
-  "33 - إليزي": ["إليزي", "جانت"],
-  "34 - برج بوعريريج": ["برج بوعريريج", "راس الوادي"],
-  "35 - بومرداس": ["بومرداس", "خميس الخشنة", "بودواو", "برج منايل"],
-  "36 - الطارف": ["الطارف", "القالة"],
-  "37 - تندوف": ["تندوف"],
-  "38 - تسمسيلت": ["تسمسيلت", "ثنية الحد"],
-  "39 - الوادي": ["الوادي", "جامعة"],
-  "40 - خنشلة": ["خنشلة", "ششار"],
-  "41 - سوق أهراس": ["سوق أهراس", "سدراتة"],
-  "42 - تيبازة": ["تيبازة", "شرشال", "قليعة"],
-  "43 - ميلة": ["ميلة", "شلغوم العيد"],
-  "44 - عين الدفلى": ["عين الدفلى", "خميس مليانة"],
-  "45 - النعامة": ["النعامة", "مشرية"],
-  "46 - عين تموشنت": ["عين تموشنت", "بني صاف"],
-  "47 - غرداية": ["غرداية", "القرارة", "متليلي"],
-  "48 - غليزان": ["غليزان", "مازونة"],
-  "49 - المغير": ["المغير"],
-  "50 - المنيعة": ["المنيعة"],
-  "51 - أولاد جلال": ["أولاد جلال"],
-  "52 - برج باجي مختار": ["برج باجي مختار"],
-  "53 - بني عباس": ["بني عباس"],
-  "54 - تيميمون": ["تيميمون"],
-  "55 - تقرت": ["تقرت"],
-  "56 - جانت": ["جانت"],
-  "57 - إن صالح": ["إن صالح"],
-  "58 - إن قزام": ["إن قزام"]
-};
-
-function initWilayas(){
-  const wSelect = document.getElementById('custWilaya');
-  wSelect.innerHTML = '<option value="">اختر الولاية</option>';
-  Object.keys(dzData).forEach(w => {
-    wSelect.innerHTML += `<option value="${w}">${w}</option>`;
-  });
-}
-
-function updateCommunes(){
-  const w = document.getElementById('custWilaya').value;
-  const cSelect = document.getElementById('custCommune');
-  cSelect.innerHTML = '<option value="">اختر البلدية</option>';
-  if(w && dzData[w]){
-    dzData[w].forEach(c => { cSelect.innerHTML += `<option value="${c}">${c}</option>`; });
-  }
-}
 
 let allProducts = [];
 let cart = JSON.parse(localStorage.getItem('riva_cart') || '[]');
@@ -619,12 +524,10 @@ document.getElementById('checkoutBtn').addEventListener('click', async () => {
 
   const name = document.getElementById('custName').value.trim();
   const phone = document.getElementById('custPhone').value.trim();
-  const wilaya = document.getElementById('custWilaya').value;
-  const commune = document.getElementById('custCommune').value;
-  const payment = document.getElementById('paymentMethod').value;
+  const address = document.getElementById('custAddress').value.trim();
 
-  if(!name || !phone || !wilaya || !commune){
-    alert('يرجى اختيار الولاية والبلدية وإدخال الاسم ورقم الهاتف.');
+  if(!name || !phone || !address){
+    alert('يرجى ملء جميع البيانات (الاسم، الهاتف، العنوان) لتقديم الطلب.');
     return;
   }
 
@@ -633,8 +536,7 @@ document.getElementById('checkoutBtn').addEventListener('click', async () => {
   const newOrder = {
     customerName: name,
     phone: phone,
-    address: `${wilaya} - ${commune}`,
-    paymentMethod: payment,
+    address: address,
     items: cart,
     total: total,
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -642,20 +544,15 @@ document.getElementById('checkoutBtn').addEventListener('click', async () => {
 
   try {
     await db.collection('orders').add(newOrder);
+    alert('تم استلام طلبك بنجاح! سيتواصل معك فريقنا لتأكيد التوصيل.');
     cart = [];
     saveCart();
     closeCart();
-    document.getElementById('successModal').classList.add('active');
   } catch(err) {
     alert('حدث خطأ أثناء إرسال الطلب: ' + err.message);
   }
 });
 
-function closeSuccess(){
-  document.getElementById('successModal').classList.remove('active');
-}
-
-initWilayas();
 renderCart();
 </script>
 </body>
