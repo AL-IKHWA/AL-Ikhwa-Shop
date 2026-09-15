@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تفاصيل المنتج | الأخوة شوب</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --ink:#1c1a17; --espresso:#2b2420; --brass:#b8863b; --linen:#f6f1e8; --line:#d9cdb6; }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cairo',sans-serif;background:var(--linen);color:var(--ink);padding-bottom:3rem;}
+  nav{display:flex;align-items:center;justify-content:space-between;padding:1.1rem 5%;background:var(--linen);border-bottom:1px solid var(--line);}
+  .brand{font-family:'Tajawal',sans-serif;font-weight:900;font-size:1.5rem;color:var(--espresso);}
+  .brand span{color:var(--brass);}
+  
+  .container{max-width:1100px;margin:2rem auto;padding:0 1rem;}
+  .product-detail{display:grid;grid-template-columns:1fr 1.2fr;gap:2rem;background:#fff;padding:2rem;border:1px solid var(--line);}
+  
+  /* Gallery Layout */
+  .gallery-wrap{display:flex;gap:1rem;}
+  .thumbs{display:flex;flex-direction:column;gap:.5rem;}
+  .thumb{width:60px;height:60px;border:1px solid var(--line);cursor:pointer;object-fit:cover;}
+  .thumb.active{border-color:var(--brass);border-width:2px;}
+  .main-img{flex:1;height:400px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;}
+  .main-img img{max-width:100%;max-height:100%;object-fit:contain;}
+
+  .info h1{font-family:'Tajawal',sans-serif;font-size:1.8rem;color:var(--espresso);margin-bottom:.5rem;}
+  .info .cat{color:var(--brass);font-weight:700;font-size:.85rem;margin-bottom:.5rem;display:block;}
+  .info .price{font-size:1.6rem;font-weight:900;color:var(--espresso);margin:1rem 0;}
+  .info .price small{font-size:.9rem;color:#666;}
+  .info .desc{color:#4a4038;margin-bottom:1.5rem;line-height:1.8;}
+  
+  .btn-add{background:var(--espresso);color:#fff;border:none;padding:.8rem 1.5rem;font-weight:700;cursor:pointer;width:100%;font-size:1rem;}
+  .btn-add:hover{background:var(--brass);}
+
+  @media(max-width:768px){
+    .product-detail{grid-template-columns:1fr;}
+    .gallery-wrap{flex-direction:column-reverse;}
+    .thumbs{flex-direction:row;overflow-x:auto;}
+  }
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="brand">الاخوة <span>شوب</span></a>
+</nav>
+
+<div class="container" id="productContainer">
+  <p style="text-align:center;padding:3rem;">جاري تحميل التفاصيل...</p>
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+const params = new URLSearchParams(window.location.search);
+const productId = params.get('id');
+
+if(productId){
+  db.collection('products').doc(productId).get().then(doc => {
+    if(doc.exists){
+      renderDetail({id: doc.id, ...doc.data()});
+    }else{
+      document.getElementById('productContainer').innerHTML = '<p style="text-align:center;">المنتج غير موجود.</p>';
+    }
+  });
+}
+
+function renderDetail(p){
+  const imgs = p.images && p.images.length ? p.images : [p.image];
+  const thumbsHtml = imgs.map((img, i) => `
+    <img src="${img}" class="thumb ${i===0?'active':''}" onclick="setMainImg('${img}', this)">
+  `).join('');
+
+  document.getElementById('productContainer').innerHTML = `
+    <div class="product-detail">
+      <div class="gallery-wrap">
+        <div class="thumbs">${thumbsHtml}</div>
+        <div class="main-img"><img id="mainDisplay" src="${imgs[0]}"></div>
+      </div>
+      <div class="info">
+        <span class="cat">${p.category || ''}</span>
+        <h1>${p.name}</h1>
+        <div class="price">${p.price} <small>د.ج (DZD)</small></div>
+        <p class="desc">${p.description || 'لا يوجد وصف متوفر.'}</p>
+        <button class="btn-add" onclick="addToCart('${p.id}', '${p.name}', ${p.price}, '${imgs[0]}')">أضف إلى السلة</button>
+      </div>
+    </div>
+  `;
+}
+
+function setMainImg(url, el){
+  document.getElementById('mainDisplay').src = url;
+  document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function addToCart(id, name, price, image){
+  let cart = JSON.parse(localStorage.getItem('riva_cart') || '[]');
+  const existing = cart.find(i => i.id === id);
+  if(existing){ existing.qty += 1; }
+  else{ cart.push({ id, name, price, image, qty: 1 }); }
+  localStorage.setItem('riva_cart', JSON.stringify(cart));
+  window.location.href = 'index.html?openCart=true';
+}
+</script>
+</body>
+</html>
